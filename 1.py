@@ -1,25 +1,14 @@
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.datasets import fetch_california_housing
-california_housing = fetch_california_housing()
-data = pd.DataFrame(california_housing.data,
-columns=california_housing.feature_names)
-data['MedHouseVal'] = california_housing.target
-data.hist(bins=30, figsize=(15, 10))
-plt.suptitle('Histograms of Numerical Features')
-plt.show()
-plt.figure(figsize=(15, 10))
-for i, column in enumerate(data.columns):
-    plt.subplot(3, 3, i+1)
-    sns.boxplot(y=data[column])
-    plt.title(column)
-plt.suptitle('Box Plots of Numerical Features')
-plt.tight_layout()
-plt.show()
-Q1 = data.quantile(0.25)
-Q3 = data.quantile(0.75)
-IQR = Q3 - Q1
-outliers = ((data < (Q1 - 1.5 * IQR)) | (data > (Q3 + 1.5 * IQR))).sum()
-print("Number of outliers in each feature:")
-print(outliers)
+!pip install gensim
+import gensim.downloader as api
+model = api.load("word2vec-google-news-300")
+word1, word2 = "king", "queen"
+similarity = model.similarity(word1, word2)
+print(f"Similarity between '{word1}' and '{word2}': {similarity:.4f}")
+result = model.most_similar(positive=["king", "woman"], negative=["man"], topn=1)
+print(f"'King' - 'Man' + 'Woman' = {result[0][0]} (Similarity: {result[0][1]:.4f})")
+similar_words = model.most_similar("Paris", topn=5)
+print("Words similar to 'Paris':")
+for word, score in similar_words:
+    print(f"{word}: {score:.4f}")
+odd_word = model.doesnt_match(["breakfast", "lunch", "dinner", "banana"])
+print(f"Odd one out: {odd_word}")
