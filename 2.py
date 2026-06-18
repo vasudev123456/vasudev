@@ -1,14 +1,22 @@
-import pandas as pd
-import seaborn as sns
 import matplotlib.pyplot as plt
-from sklearn.datasets import fetch_california_housing
-california_data = fetch_california_housing(as_frame=True)
-data = california_data.frame
-correlation_matrix = data.corr()
-plt.figure(figsize=(10, 8))
-sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt='.2f', linewidths=0.5)
-plt.title('Correlation Matrix of California Housing Features')
-plt.show()
-sns.pairplot(data, diag_kind='kde', plot_kws={'alpha': 0.5})
-plt.suptitle('Pair Plot of California Housing Features', y=1.02)
+import seaborn as sns
+from sklearn.decomposition import PCA
+import numpy as np
+import spacy
+!python -m spacy download en_core_web_md
+nlp = spacy.load("en_core_web_md")
+tech_words = ["computer", "internet", "software", "hardware", "network",
+              "AI", "cloud", "cybersecurity", "database", "robotics"]
+word_vectors = np.array([nlp(word).vector for word in tech_words])
+pca_result = PCA(n_components=2).fit_transform(word_vectors)
+plt.figure(figsize=(10, 6))
+sns.scatterplot(x=pca_result[:, 0], y=pca_result[:, 1], s=100, color="blue")
+for i, word in enumerate(tech_words):
+    plt.annotate(word, (pca_result[i, 0], pca_result[i, 1]),
+                 fontsize=12, xytext=(5,5), textcoords="offset points",
+                 bbox=dict(facecolor='white', alpha=0.7))
+plt.title("PCA Visualization of Word Embeddings", fontsize=14)
+plt.xlabel("Principal Component 1", fontsize=12)
+plt.ylabel("Principal Component 2", fontsize=12)
+plt.grid(True, linestyle="--", alpha=0.5)
 plt.show()
