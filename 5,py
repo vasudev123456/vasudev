@@ -1,0 +1,23 @@
+import random
+!pip install gensim
+import gensim.downloader as api
+model = api.load("word2vec-google-news-300")
+def get_similar_words(seed_word, top_n=5):
+    """Retrieve similar words for the given seed word."""
+    try:
+        similar_words = model.most_similar(seed_word, topn=top_n)
+        return [word for word, _ in similar_words]
+    except KeyError:
+        return [seed_word]
+def generate_paragraph(seed_word):
+    """Generate a creative paragraph using similar words."""
+    words = get_similar_words(seed_word)
+    random.shuffle(words)
+    paragraph = f"Once upon a time, there was a {seed_word} who dreamed of adventure. "
+    for word in words:
+        paragraph += f"One day, it stumbled upon a {word}, leading it into an unexpected journey. "
+    paragraph += "The experience changed its life forever."
+    return paragraph
+seed_word = input("Enter a seed word: ")
+print("\nGenerated Paragraph:\n")
+print(generate_paragraph(seed_word))
