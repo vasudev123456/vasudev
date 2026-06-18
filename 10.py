@@ -1,57 +1,23 @@
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.datasets import load_breast_cancer
-from sklearn.cluster import KMeans
-from sklearn.preprocessing import StandardScaler
-from sklearn.decomposition import PCA
-from sklearn.metrics import confusion_matrix, classification_report
+!pip install fastapi uvicorn nest_asyncio gradio
+from fastapi import FastAPI, Body
+import nest_asyncio, uvicorn, threading, gradio as gr, requests
+app, codes = FastAPI(), []
+@app.get("/")
+def home(): return {"info": "Indian Penal Code", "queries": ["0: Theft", "1: Bribery", "2: Total sections"]}
+@app.post("/ipc")
+def add(fapi: dict = Body(...)): codes.append(fapi); return {"Details": f"{fapi['IPC']}, {fapi['case']}, {fapi['punishment']}"}
+@app.get("/{i}")
+def get(i: int): return codes[i] if 0 <= i < len(codes) else {"error": "Invalid index"}
+nest_asyncio.apply()
+threading.Thread(target=lambda: uvicorn.run(app, host="0.0.0.0", port=8000)).start()
+demo = gr.Blocks()
+with demo:
+    gr.Markdown("# IPC Chatbot")
+    gr.Button("Show Info").click(lambda: requests.get("http://127.0.0.1:8000/").json(), outputs=gr.Textbox())
+    with gr.Row():
+        i, c, p = gr.Textbox(placeholder="IPC"), gr.Textbox(placeholder="Case"), gr.Textbox(placeholder="Punishment")
+        gr.Button("Add IPC").click(lambda ipc, case, pun: requests.post("http://127.0.0.1:8000/ipc", json={"IPC": ipc, "case": case, "punishment": pun}).json(), inputs=[i, c, p], outputs=gr.Textbox())
+    idx = gr.Number(label="Index")
+    gr.Button("Get IPC").click(lambda index: requests.get(f"http://127.0.0.1:8000/{int(index)}").json(), inputs=idx, outputs=gr.Textbox())
 
-data = load_breast_cancer()
-X = data.data
-y = data.target
-
-scaler = StandardScaler()
-X_scaled = scaler.fit_transform(X)
-
-kmeans = KMeans(n_clusters=2, random_state=42)
-y_kmeans = kmeans.fit_predict(X_scaled)
-
-print("Confusion Matrix:")
-print(confusion_matrix(y, y_kmeans))
-print("\nClassification Report:")
-print(classification_report(y, y_kmeans))
-
-pca = PCA(n_components=2)
-X_pca = pca.fit_transform(X_scaled)
-
-df = pd.DataFrame(X_pca, columns=['PC1', 'PC2'])
-df['Cluster'] = y_kmeans
-df['True Label'] = y
-
-plt.figure(figsize=(8, 6))
-sns.scatterplot(data=df, x='PC1', y='PC2', hue='Cluster', palette='Set1', s=100, edgecolor='black', alpha=0.7)
-plt.title('K-Means Clustering of Breast Cancer Dataset')
-plt.xlabel('Principal Component 1')
-plt.ylabel('Principal Component 2')
-plt.legend(title="Cluster")
-plt.show()
-
-plt.figure(figsize=(8, 6))
-sns.scatterplot(data=df, x='PC1', y='PC2', hue='True Label', palette='coolwarm', s=100, edgecolor='black', alpha=0.7)
-plt.title('True Labels of Breast Cancer Dataset')
-plt.xlabel('Principal Component 1')
-plt.ylabel('Principal Component 2')
-plt.legend(title="True Label")
-plt.show()
-
-plt.figure(figsize=(8, 6))
-sns.scatterplot(data=df, x='PC1', y='PC2', hue='Cluster', palette='Set1', s=100, edgecolor='black', alpha=0.7)
-centers = pca.transform(kmeans.cluster_centers_)
-plt.scatter(centers[:, 0], centers[:, 1], s=200, c='red', marker='X', label='Centroids')
-plt.title('K-Means Clustering with Centroids')
-plt.xlabel('Principal Component 1')
-plt.ylabel('Principal Component 2')
-plt.legend(title="Cluster")
-plt.show()
+demo.launch(share=True)
